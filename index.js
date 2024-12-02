@@ -5,7 +5,7 @@ const http = require('http'); // Added HTTP module for server
 const hostName = "mc1496499.fmcs.cloud";
 const hostPort = 25811;
 
-const bots = ["BoTs"];
+const bots = [];
 const botsByName = {};
 
 const autoSpawnBots = 1;
@@ -31,11 +31,32 @@ function spawnBot(botName) {
             console.log(`\x1b[32m@${botName}\x1b[0m: ${data.text}`);
         }
     });
+
+    bot.on('end', () => {
+        console.log(`Bot "${botName}" disconnected, attempting to reconnect...`);
+        setTimeout(() => spawnBot(botName), 5000); // Reconnect after 5 seconds
+    });
+
+    bot.on('kicked', (reason) => {
+        console.log(`Bot "${botName}" was kicked: ${reason}. Reconnecting...`);
+        setTimeout(() => spawnBot(botName), 5000); // Reconnect after 5 seconds
+    });
+
+    bot.on('error', (err) => {
+        console.error(`Bot "${botName}" encountered an error: ${err}. Reconnecting...`);
+        setTimeout(() => spawnBot(botName), 5000); // Reconnect after 5 seconds
+    });
+
+    bot.on('exit', (code) => {
+        console.log(`Bot "${botName}" exited with code ${code}. Reconnecting...`);
+        setTimeout(() => spawnBot(botName), 5000); // Reconnect after 5 seconds
+    });
 }
 
 async function spawnBots(amount = 1) {
     for (let i = 0; i < amount; i++) {
-        spawnBot(`guard_${bots.length}`);
+        const botName = `guard_${bots.length}`;
+        spawnBot(botName);
 
         await sleep(spawnDelay);
     }
