@@ -1,5 +1,6 @@
 const { fork } = require('child_process');
 const readline = require("readline");
+const http = require('http'); // Added HTTP module for server
 
 const hostName = "mc1496499.fmcs.cloud";
 const hostPort = 25811;
@@ -16,68 +17,68 @@ const reader = readline.createInterface({
 });
 
 function sleep(time) {
-    return new Promise(resolve=>setTimeout(resolve, time));
+    return new Promise(resolve => setTimeout(resolve, time));
 }
 
 function spawnBot(botName) {
-	const bot = fork("bot.js", [botName, hostName, hostPort]);
+    const bot = fork("bot.js", [botName, hostName, hostPort]);
 
-	bots.push(bot);
-	botsByName[botName] = bot;
+    bots.push(bot);
+    botsByName[botName] = bot;
 
-	bot.on('message', (data) => {
-		if (data.type === "message") {
-			console.log(`\x1b[32m@${botName}\x1b[0m: ${data.text}`);
-		}
-	});
+    bot.on('message', (data) => {
+        if (data.type === "message") {
+            console.log(`\x1b[32m@${botName}\x1b[0m: ${data.text}`);
+        }
+    });
 }
 
-async function spawnBots(amount=1) {
-	for (let i = 0; i < amount; i++) {
-		spawnBot(`guard_${bots.length}`);
+async function spawnBots(amount = 1) {
+    for (let i = 0; i < amount; i++) {
+        spawnBot(`guard_${bots.length}`);
 
-		await sleep(spawnDelay);
-	}
+        await sleep(spawnDelay);
+    }
 }
 
 const COMMAND_FUNCTIONS = {
-	"ping": ()=>{
-		console.log("pong");
-	},
+    "ping": () => {
+        console.log("pong");
+    },
 
-	"spawn": (amount)=>{
-		spawnBots(Number(amount));
-	},
+    "spawn": (amount) => {
+        spawnBots(Number(amount));
+    },
 };
 
 function runCommand(command) {
-	const tokens = command.split(' ');
+    const tokens = command.split(' ');
 
-	if (tokens[0].startsWith('@')) {
-		const botName = tokens[0].slice(1);
-		const bot = botsByName[botName];
+    if (tokens[0].startsWith('@')) {
+        const botName = tokens[0].slice(1);
+        const bot = botsByName[botName];
 
-		if (!bot) {
-			console.log(`Couldn't find bot named "${botName}".`);
-			return;
-		}
+        if (!bot) {
+            console.log(`Couldn't find bot named "${botName}".`);
+            return;
+        }
 
-		bot.send({
-			type: "command",
-			command: tokens.slice(1),
-		});
+        bot.send({
+            type: "command",
+            command: tokens.slice(1),
+        });
 
-		return;
-	}
+        return;
+    }
 
-	const commandFunction = COMMAND_FUNCTIONS[tokens[0]];
+    const commandFunction = COMMAND_FUNCTIONS[tokens[0]];
 
-	if (!commandFunction) {
-		console.log(`Unknown command: ${tokens[0]}`);
-		return;
-	}
+    if (!commandFunction) {
+        console.log(`Unknown command: ${tokens[0]}`);
+        return;
+    }
 
-	commandFunction(...tokens.slice(1));
+    commandFunction(...tokens.slice(1));
 }
 
 function inputLoop(command) {
@@ -86,8 +87,18 @@ function inputLoop(command) {
 }
 
 async function main() {
-	spawnBots(autoSpawnBots);
-	inputLoop();
+    spawnBots(autoSpawnBots);
+    inputLoop();
 }
 
+// Create an HTTP server for Render
+const port = process.env.PORT || 3000;
+http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('Bot server is running.\n');
+}).listen(port, () => {
+    console.log(`Server running on port ${port}`);
+});
+
+// Start the main function
 main();
