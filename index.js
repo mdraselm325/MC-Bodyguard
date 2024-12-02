@@ -1,10 +1,10 @@
 const { fork } = require('child_process');
 const readline = require("readline");
 
-const hostName = "localhost";
-const hostPort = 12345;
+const hostName = "mc1496499.fmcs.cloud";
+const hostPort = 25811;
 
-const bots = [];
+const bots = ["BoTs"];
 const botsByName = {};
 
 const autoSpawnBots = 1;
